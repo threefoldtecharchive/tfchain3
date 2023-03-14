@@ -9,6 +9,8 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 pub mod configs;
 pub use configs::*;
 
+use codec::{Decode, Encode, MaxEncodedLen};
+use frame_election_provider_support::onchain;
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
@@ -36,7 +38,7 @@ pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
 		ConstU128, ConstU16, ConstU32, ConstU64, ConstU8, Currency, EitherOfDiverse, EnsureOneOf,
-		FindAuthor, KeyOwnerProofSystem, PalletInfo, Randomness, StorageInfo, U128CurrencyToVote,
+		FindAuthor, KeyOwnerProofSystem, Randomness, StorageInfo, U128CurrencyToVote,
 	},
 	weights::{
 		constants::{
@@ -66,22 +68,6 @@ pub use tfchain_support::constants::time::*;
 pub use node_primitives::{AccountId, Signature};
 use node_primitives::{AccountIndex, Balance, BlockNumber, Hash, Index, Moment};
 
-/// We assume that ~10% of the block weight is consumed by `on_initialize` handlers.
-/// This is used to limit the maximal weight of a single extrinsic.
-const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(10);
-/// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used
-/// by  Operational  extrinsics.
-const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
-/// We allow for 2 seconds of compute with a 6 second average block time.
-const MAXIMUM_BLOCK_WEIGHT: Weight = 2 * WEIGHT_PER_SECOND;
-
-pub type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
-
-type EnsureRootOrCouncilApproval = EnsureOneOf<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>,
->;
-
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
 /// of data like extrinsics, allowing for them to continue syncing the network through upgrades
@@ -104,6 +90,17 @@ pub mod opaque {
 			pub grandpa: Grandpa,
 		}
 	}
+}
+
+impl_opaque_keys! {
+	pub struct SessionKeys {
+		pub grandpa: Grandpa,
+		pub aura: Aura,
+	}
+}
+
+pub fn session_keys(aura: AuraId, grandpa: GrandpaId) -> SessionKeys {
+	SessionKeys { aura, grandpa }
 }
 
 // To learn more about runtime versioning, see:
@@ -131,6 +128,22 @@ pub fn native_version() -> NativeVersion {
 	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
 }
 
+/// We assume that ~10% of the block weight is consumed by `on_initialize` handlers.
+/// This is used to limit the maximal weight of a single extrinsic.
+const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(10);
+/// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used
+/// by  Operational  extrinsics.
+const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
+/// We allow for 2 seconds of compute with a 6 second average block time.
+const MAXIMUM_BLOCK_WEIGHT: Weight = 2 * WEIGHT_PER_SECOND;
+
+pub type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
+
+type EnsureRootOrCouncilApproval = EnsureOneOf<
+	EnsureRoot<AccountId>,
+	pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>,
+>;
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -149,7 +162,6 @@ construct_runtime!(
 		Grandpa: pallet_grandpa = 8,
 		AssetTxPayment: pallet_asset_tx_payment = 9,
 		Staking: pallet_staking = 10,
-		Session: pallet_session = 11,
 		Balances: pallet_balances = 12,
 		TransactionPayment: pallet_transaction_payment = 13,
 		Council: pallet_collective::<Instance1> = 14,
@@ -157,7 +169,7 @@ construct_runtime!(
 		Treasury: pallet_treasury = 16,
 		Sudo: pallet_sudo = 17,
 		Offences: pallet_offences = 18,
-		Historical: pallet_session_historical::{Pallet} = 19,
+		Historical: pallet_session::historical::{Pallet} = 19,
 		Multisig: pallet_multisig = 20,
 		Assets: pallet_assets = 21,
 	}

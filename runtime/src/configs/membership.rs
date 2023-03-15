@@ -24,9 +24,9 @@ use frame_support::traits::ChangeMembers;
 pub struct MembershipChangedGroup;
 impl ChangeMembers<AccountId> for MembershipChangedGroup {
 	fn change_members_sorted(
-		incoming: &[AccountId],
-		outgoing: &[AccountId],
-		sorted_new: &[AccountId],
+		_incoming: &[AccountId],
+		_outgoing: &[AccountId],
+		_sorted_new: &[AccountId],
 	) {
 		// Council::change_members_sorted(incoming, outgoing, sorted_new);
 	}

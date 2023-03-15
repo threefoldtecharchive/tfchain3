@@ -33,6 +33,7 @@ impl pallet_treasury::Config for Runtime {
 	type ProposalBondMinimum = ProposalBondMinimum;
 	type ProposalBondMaximum = ();
 	type SpendPeriod = SpendPeriod;
+	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<Balance>;
 	type Burn = Burn;
 	type BurnDestination = ();
 	type SpendFunds = ();

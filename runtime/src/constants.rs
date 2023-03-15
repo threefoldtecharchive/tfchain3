@@ -31,6 +31,9 @@ macro_rules! prod_or_fast {
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 pub type BlockNumber = u32;
+
+pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
+
 /// Time and blocks.
 pub mod time {
 	/// This determines the average expected block time that we are targeting.

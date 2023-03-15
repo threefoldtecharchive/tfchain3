@@ -140,6 +140,8 @@ type EnsureRootOrCouncilApproval = EitherOfDiverse<
 	pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>,
 >;
 
+pub const EXISTENTIAL_DEPOSIT: u128 = 500;
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -155,26 +157,27 @@ construct_runtime!(
 		// for im-online and staking.
 		Authorship: pallet_authorship = 5,
 
+		// Money stuff
+		Balances: pallet_balances = 10,
+		Treasury: pallet_treasury = 11,
+		Assets: pallet_assets = 12,
+
 		// Consensus stuff
-		Session: pallet_session = 10,
-		Babe: pallet_babe = 11,
-		Grandpa: pallet_grandpa = 12,
-		Historical: pallet_session::historical::{Pallet} = 13,
+		Session: pallet_session = 15,
+		Babe: pallet_babe = 16,
+		Grandpa: pallet_grandpa = 17,
+		Historical: pallet_session::historical::{Pallet} = 18,
 
 		// Tx stuff
-		AssetTxPayment: pallet_asset_tx_payment = 15,
-		TransactionPayment: pallet_transaction_payment = 16,
+		AssetTxPayment: pallet_asset_tx_payment = 20,
+		TransactionPayment: pallet_transaction_payment = 21,
 
 		// Staking stuff
-		ElectionProviderMultiPhase: pallet_election_provider_multi_phase = 20,
-		Staking: pallet_staking = 21,
-		Offences: pallet_offences = 22,
-		VoterList: pallet_bags_list::<Instance1> = 23,
+		ElectionProviderMultiPhase: pallet_election_provider_multi_phase = 25,
+		Staking: pallet_staking = 26,
+		Offences: pallet_offences = 27,
+		VoterList: pallet_bags_list::<Instance1> = 28,
 
-		// Money stuff
-		Balances: pallet_balances = 25,
-		Treasury: pallet_treasury = 26,
-		Assets: pallet_assets = 27,
 
 		// Dao stuff
 		Council: pallet_collective::<Instance1> = 30,

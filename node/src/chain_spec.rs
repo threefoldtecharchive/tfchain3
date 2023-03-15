@@ -32,11 +32,6 @@ where
 	AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
 }
 
-/// Generate an Aura authority key.
-pub fn authority_keys_from_seed(s: &str) -> (BabeId, GrandpaId) {
-	(get_from_seed::<BabeId>(s), get_from_seed::<GrandpaId>(s))
-}
-
 pub fn development_config() -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
@@ -152,8 +147,8 @@ fn testnet_genesis(
 	endowed_accounts: Vec<AccountId>,
 	council_members: Vec<AccountId>,
 ) -> GenesisConfig {
-	const ENDOWMENT: u128 = 1_000_000_000 * CHIS;
-	const STASH: u128 = 2_500_000 * CHIS;
+	const ENDOWMENT: u128 = 1_000_000_000_000 * CHIS;
+	const STASH: u128 = 100_000_000_000_000 * CHIS;
 
 	GenesisConfig {
 		system: SystemConfig {
@@ -162,7 +157,11 @@ fn testnet_genesis(
 		},
 		balances: BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 60.
-			balances: endowed_accounts.iter().cloned().map(|k| (k, ENDOWMENT)).collect(),
+			balances: endowed_accounts
+				.iter()
+				.map(|k| (k.clone(), ENDOWMENT))
+				.chain(initial_authorities.iter().map(|x| (x.0.clone(), STASH)))
+				.collect(),
 		},
 		grandpa: GrandpaConfig { authorities: Default::default() },
 		sudo: SudoConfig {

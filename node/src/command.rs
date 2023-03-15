@@ -8,7 +8,7 @@ use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE
 use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli};
 use sc_service::PartialComponents;
 use sp_keyring::Sr25519Keyring;
-use tfchain_runtime::{Block, ExistentialDeposit};
+use tfchain_runtime::{Block, EXISTENTIAL_DEPOSIT};
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
@@ -46,7 +46,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		&node_template_runtime::VERSION
+		&tfchain_runtime::VERSION
 	}
 }
 
@@ -162,7 +162,7 @@ pub fn run() -> sc_cli::Result<()> {
 							Box::new(TransferKeepAliveBuilder::new(
 								client.clone(),
 								Sr25519Keyring::Alice.to_account_id(),
-								ExistentialDeposit,
+								EXISTENTIAL_DEPOSIT,
 							)),
 						]);
 

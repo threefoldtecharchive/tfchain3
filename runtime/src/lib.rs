@@ -9,6 +9,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 pub mod configs;
 pub use configs::*;
 
+use codec::Encode;
 use frame_election_provider_support::onchain;
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
@@ -22,6 +23,7 @@ use sp_runtime::{
 	generic, impl_opaque_keys,
 	traits::{
 		AccountIdLookup, BlakeTwo256, Block as BlockT, Bounded, ConvertInto, NumberFor, OpaqueKeys,
+		SaturatedConversion,
 	},
 	transaction_validity::{TransactionPriority, TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, FixedPointNumber, Percent, Perquintill,
@@ -66,6 +68,9 @@ use constants::{currency::*, time::*};
 
 pub use node_primitives::{AccountId, Signature};
 pub use node_primitives::{AccountIndex, Balance, BlockNumber, Hash, Index, Moment};
+
+pub use tfchain_support::traits::*;
+pub use tfchain_support::types::*;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -183,8 +188,14 @@ construct_runtime!(
 		Council: pallet_collective::<Instance1> = 30,
 		CouncilMembership: pallet_membership::<Instance1> = 31,
 
-
 		Multisig: pallet_multisig = 35,
+
+		// Custom pallets
+		GridContracts: pallet_grid_contracts = 40,
+		GridStore: pallet_tfgrid = 41,
+		Kvstore: pallet_kvstore = 42,
+		TftPrice: pallet_tft_price = 43,
+		Dao: pallet_dao = 44,
 	}
 );
 
@@ -219,6 +230,53 @@ pub type Executive = frame_executive::Executive<
 	Runtime,
 	AllPalletsWithSystem,
 >;
+
+impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
+where
+	RuntimeCall: From<LocalCall>,
+{
+	fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
+		call: RuntimeCall,
+		public: <Signature as sp_runtime::traits::Verify>::Signer,
+		account: AccountId,
+		index: Index,
+	) -> Option<(
+		RuntimeCall,
+		<UncheckedExtrinsic as sp_runtime::traits::Extrinsic>::SignaturePayload,
+	)> {
+		let period = BlockHashCount::get() as u64;
+		let current_block = System::block_number().saturated_into::<u64>().saturating_sub(1);
+		let tip = 0;
+		let extra: SignedExtra = (
+			frame_system::CheckNonZeroSender::<Runtime>::new(),
+			frame_system::CheckSpecVersion::<Runtime>::new(),
+			frame_system::CheckTxVersion::<Runtime>::new(),
+			frame_system::CheckGenesis::<Runtime>::new(),
+			frame_system::CheckEra::<Runtime>::from(generic::Era::mortal(period, current_block)),
+			frame_system::CheckNonce::<Runtime>::from(index),
+			frame_system::CheckWeight::<Runtime>::new(),
+			pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
+		);
+
+		#[cfg_attr(not(feature = "std"), allow(unused_variables))]
+		let raw_payload = SignedPayload::new(call, extra)
+			.map_err(|e| {
+				log::error!("SignedPayload error: {:?}", e);
+			})
+			.ok()?;
+
+		let signature = raw_payload.using_encoded(|payload| C::sign(payload, public))?;
+
+		let address = account;
+		let (call, extra, _) = raw_payload.deconstruct();
+		Some((call, (sp_runtime::MultiAddress::Id(address), signature, extra)))
+	}
+}
+
+impl frame_system::offchain::SigningTypes for Runtime {
+	type Public = <Signature as sp_runtime::traits::Verify>::Signer;
+	type Signature = Signature;
+}
 
 impl<C> frame_system::offchain::SendTransactionTypes<C> for Runtime
 where

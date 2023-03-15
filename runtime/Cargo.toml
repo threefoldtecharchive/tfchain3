@@ -16,9 +16,9 @@ targets = ["x86_64-unknown-linux-gnu"]
 default-features = false
 path = "../pallets/pallet-tfgrid"
 
-[dependencies.pallet-smart-contract]
+[dependencies.pallet-grid-contracts]
 default-features = false
-path = "../pallets/pallet-smart-contract"
+path = "../pallets/pallet-grid-contracts"
 
 [dependencies.pallet-tft-price]
 default-features = false
@@ -131,7 +131,7 @@ std = [
 	"sp-version/std",
 	"sp-staking/std",
 	"pallet-tft-price/std",
-    "pallet-smart-contract/std",
+    "pallet-grid-contracts/std",
 	"pallet-dao/std",
 	"pallet-tfgrid/std",
 	"pallet-kvstore/std",
@@ -160,7 +160,7 @@ runtime-benchmarks = [
 	"pallet-grandpa/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
-	"pallet-smart-contract/runtime-benchmarks",
+	"pallet-grid-contracts/runtime-benchmarks",
 	"pallet-tfgrid/runtime-benchmarks",
 ]
 try-runtime = [
@@ -175,7 +175,7 @@ try-runtime = [
 	"pallet-timestamp/try-runtime",
 	"pallet-transaction-payment/try-runtime",
 	"pallet-tft-price/try-runtime",
-    "pallet-smart-contract/try-runtime",
+    "pallet-grid-contracts/try-runtime",
 	"pallet-dao/try-runtime",
 	"pallet-tfgrid/try-runtime",
 	"pallet-kvstore/try-runtime"

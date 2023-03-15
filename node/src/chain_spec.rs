@@ -5,9 +5,12 @@ use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use tfchain_runtime::{
 	currency::CHIS, AccountId, AssetsConfig, BabeConfig, BabeId, BalancesConfig, CouncilConfig,
-	CouncilMembershipConfig, GenesisConfig, GrandpaConfig, Perbill, SessionConfig, SessionKeys,
-	Signature, StakingConfig, SudoConfig, SystemConfig, TreasuryConfig, WASM_BINARY,
+	CouncilMembershipConfig, GenesisConfig, GrandpaConfig, GridContractsConfig, GridStoreConfig,
+	Perbill, SessionConfig, SessionKeys, Signature, StakingConfig, SudoConfig, SystemConfig,
+	TftPriceConfig, TreasuryConfig, WASM_BINARY,
 };
+
+const DEV_PROTOCOL_ID: &str = "chi";
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -35,6 +38,16 @@ where
 pub fn development_config() -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
+	let properties = Some(
+		serde_json::json!({
+			"tokenDecimals": 7,
+			"tokenSymbol": "CHI",
+		})
+		.as_object()
+		.expect("Map given; qed")
+		.clone(),
+	);
+
 	Ok(ChainSpec::from_genesis(
 		// Name
 		"Development",
@@ -46,8 +59,8 @@ pub fn development_config() -> Result<ChainSpec, String> {
 				wasm_binary,
 				// Initial PoA authorities
 				vec![(
-					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
 					get_from_seed::<BabeId>("Alice"),
 					get_from_seed::<GrandpaId>("Alice"),
 				)], // Sudo account
@@ -60,6 +73,14 @@ pub fn development_config() -> Result<ChainSpec, String> {
 					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
 				],
 				vec![get_account_id_from_seed::<sr25519::Public>("Alice")],
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				// TFT price pallet min price
+				10,
+				// TFT price pallet max price
+				1000,
+				// billing frequency
+				5,
 			)
 		},
 		// Bootnodes
@@ -68,9 +89,9 @@ pub fn development_config() -> Result<ChainSpec, String> {
 		None,
 		// Protocol ID
 		None,
-		None,
+		Some(DEV_PROTOCOL_ID),
 		// Properties
-		None,
+		properties,
 		// Extensions
 		None,
 	))
@@ -79,11 +100,21 @@ pub fn development_config() -> Result<ChainSpec, String> {
 pub fn local_testnet_config() -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
+	let properties = Some(
+		serde_json::json!({
+			"tokenDecimals": 7,
+			"tokenSymbol": "CHI",
+		})
+		.as_object()
+		.expect("Map given; qed")
+		.clone(),
+	);
+
 	Ok(ChainSpec::from_genesis(
 		// Name
-		"Local Testnet",
+		"Local Chi Testnet",
 		// ID
-		"local_testnet",
+		"local_chi_testnet",
 		ChainType::Local,
 		move || {
 			testnet_genesis(
@@ -123,6 +154,14 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
 					get_account_id_from_seed::<sr25519::Public>("Bob"),
 				],
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				// TFT price pallet min price
+				10,
+				// TFT price pallet max price
+				1000,
+				// billing frequency
+				5,
 			)
 		},
 		// Bootnodes
@@ -130,10 +169,10 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 		// Telemetry
 		None,
 		// Protocol ID
-		None,
+		Some(DEV_PROTOCOL_ID),
 		// Properties
 		None,
-		None,
+		properties,
 		// Extensions
 		None,
 	))
@@ -146,6 +185,11 @@ fn testnet_genesis(
 	root_key: AccountId,
 	endowed_accounts: Vec<AccountId>,
 	council_members: Vec<AccountId>,
+	foundation_account: AccountId,
+	sales_account: AccountId,
+	min_tft_price: u32,
+	max_tft_price: u32,
+	billing_frequency: u64,
 ) -> GenesisConfig {
 	const ENDOWMENT: u128 = 1_000_000_000_000 * CHIS;
 	const STASH: u128 = 1_000_000_000 * CHIS;
@@ -200,5 +244,33 @@ fn testnet_genesis(
 		},
 		assets: AssetsConfig { ..Default::default() },
 		treasury: TreasuryConfig {},
+		tft_price: TftPriceConfig { min_tft_price, max_tft_price, _data: std::marker::PhantomData },
+		grid_contracts: GridContractsConfig { billing_frequency },
+		grid_store: GridStoreConfig {
+			su_price_value: 50000,
+			su_price_unit: 4,
+			nu_price_value: 15000,
+			nu_price_unit: 4,
+			cu_price_value: 100000,
+			cu_price_unit: 4,
+			ipu_price_value: 40000,
+			ipu_price_unit: 4,
+			unique_name_price_value: 2500,
+			domain_name_price_value: 5000,
+			foundation_account: Some(foundation_account),
+			sales_account: Some(sales_account),
+			farming_policy_diy_cu: 2400,
+			farming_policy_diy_su: 1000,
+			farming_policy_diy_nu: 30,
+			farming_policy_diy_ipu: 5,
+			farming_policy_diy_minimal_uptime: 95,
+			farming_policy_certified_cu: 3000,
+			farming_policy_certified_su: 1250,
+			farming_policy_certified_nu: 38,
+			farming_policy_certified_ipu: 6,
+			farming_policy_certified_minimal_uptime: 95,
+			discount_for_dedication_nodes: 50,
+			connection_price: 80,
+		},
 	}
 }

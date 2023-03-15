@@ -4043,6 +4043,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-grid-contracts"
+version = "3.0.0"
+dependencies = [
+ "env_logger 0.9.3",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "frame-try-runtime",
+ "log",
+ "pallet-authorship",
+ "pallet-balances",
+ "pallet-session",
+ "pallet-tfgrid",
+ "pallet-tft-price",
+ "pallet-timestamp",
+ "parity-scale-codec 3.4.0",
+ "parking_lot 0.12.1",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-keystore",
+ "sp-runtime",
+ "sp-std",
+ "substrate-fixed",
+ "tfchain-support",
+]
+
+[[package]]
 name = "pallet-kvstore"
 version = "3.0.0"
 dependencies = [
@@ -4142,34 +4170,6 @@ dependencies = [
  "sp-runtime",
  "sp-session",
  "sp-std",
-]
-
-[[package]]
-name = "pallet-smart-contract"
-version = "3.0.0"
-dependencies = [
- "env_logger 0.10.0",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "frame-try-runtime",
- "log",
- "pallet-authorship",
- "pallet-balances",
- "pallet-session",
- "pallet-tfgrid",
- "pallet-tft-price",
- "pallet-timestamp",
- "parity-scale-codec 3.4.0",
- "parking_lot 0.12.1",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-keystore",
- "sp-runtime",
- "sp-std",
- "substrate-fixed",
- "tfchain-support",
 ]
 
 [[package]]
@@ -7710,6 +7710,7 @@ dependencies = [
  "sc-telemetry",
  "sc-transaction-pool",
  "sc-transaction-pool-api",
+ "serde_json",
  "sp-api",
  "sp-block-builder",
  "sp-blockchain",
@@ -7752,13 +7753,13 @@ dependencies = [
  "pallet-dao",
  "pallet-election-provider-multi-phase",
  "pallet-grandpa",
+ "pallet-grid-contracts",
  "pallet-kvstore",
  "pallet-membership",
  "pallet-multisig",
  "pallet-offences",
  "pallet-session",
  "pallet-session-benchmarking",
- "pallet-smart-contract",
  "pallet-staking",
  "pallet-staking-reward-curve",
  "pallet-sudo",

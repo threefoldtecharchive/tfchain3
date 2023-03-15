@@ -4,7 +4,7 @@ description = 'Substrate TF Grid DB pallet'
 edition = '2018'
 homepage = 'https://threefold.io'
 license = 'Apache'
-name = 'pallet-smart-contract'
+name = 'pallet-grid-contracts'
 repository = 'https://github.com/threefoldtech/tfchain_pallets'
 version = '3.0.0'
 

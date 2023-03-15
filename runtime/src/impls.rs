@@ -17,12 +17,14 @@
 
 //! Some configurable implementations as associated type for the substrate runtime.
 
-use crate::{AccountId, Assets, Authorship, Balances, NegativeImbalance, Runtime};
+use crate::{AccountId, Assets, Authorship, Balance, Balances, NegativeImbalance, Runtime};
 use frame_support::traits::{
 	fungibles::{Balanced, CreditOf},
 	Currency, OnUnbalanced,
 };
 use pallet_asset_tx_payment::HandleCredit;
+use sp_staking::{EraIndex, OnStakerSlash};
+use sp_std::collections::btree_map::BTreeMap;
 
 pub struct Author;
 impl OnUnbalanced<NegativeImbalance> for Author {
@@ -42,6 +44,17 @@ impl HandleCredit<AccountId, Assets> for CreditToBlockAuthor {
 			// Drop the result which will trigger the `OnDrop` of the imbalance in case of error.
 			let _ = Assets::resolve(&author, credit);
 		}
+	}
+}
+
+pub struct OnStakerSlashNoop;
+impl OnStakerSlash<AccountId, Balance> for OnStakerSlashNoop {
+	fn on_slash(
+		_stash: &AccountId,
+		_slashed_active: Balance,
+		_slashed_ongoing: &BTreeMap<EraIndex, Balance>,
+	) {
+		// do nothing
 	}
 }
 
@@ -244,7 +257,7 @@ mod multiplier_tests {
 					adjusted_fee,
 					adjusted_fee / MILLICENTS,
 					adjusted_fee / CENTS,
-					adjusted_fee / DOLLARS,
+					adjusted_fee / UNITS,
 				);
 			}
 		});

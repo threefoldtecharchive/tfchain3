@@ -10,21 +10,58 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
+#[macro_export]
+macro_rules! prod_or_fast {
+	($prod:expr, $test:expr) => {
+		if cfg!(feature = "fast-runtime") {
+			$test
+		} else {
+			$prod
+		}
+	};
+	($prod:expr, $test:expr, $env:expr) => {
+		if cfg!(feature = "fast-runtime") {
+			core::option_env!($env).map(|s| s.parse().ok()).flatten().unwrap_or($test)
+		} else {
+			$prod
+		}
+	};
+}
 
 // You should have received a copy of the GNU General Public License
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
+pub type BlockNumber = u32;
+/// Time and blocks.
+pub mod time {
+	/// This determines the average expected block time that we are targeting.
+	/// Blocks will be produced at a minimum duration defined by `SLOT_DURATION`.
+	/// `SLOT_DURATION` is picked up by `pallet_timestamp` which is in turn picked
+	/// up by `pallet_aura` to implement `fn slot_duration()`.
+	///
+	/// Change this to adjust the block time.
+	pub const MILLISECS_PER_BLOCK: u64 = 6000;
+	pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
+	pub const SECS_PER_HOUR: u64 = 3600;
+	pub const EPOCH_DURATION_IN_BLOCKS: super::BlockNumber = 1 * HOURS;
+	pub const EPOCH_DURATION_IN_SLOTS: super::BlockNumber = prod_or_fast!(4 * HOURS, 1 * MINUTES);
+
+	// These time units are defined in number of blocks.
+	pub const MINUTES: super::BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as super::BlockNumber);
+	pub const HOURS: super::BlockNumber = MINUTES * 60;
+	pub const DAYS: super::BlockNumber = HOURS * 24;
+}
 
 /// Money matters.
 pub mod currency {
 	use crate::Balance;
 
 	pub const CHIS: Balance = 1_000_000_0;
-	pub const DOLLARS: Balance = CHIS;
-	pub const CENTS: Balance = DOLLARS / 100;
+	pub const UNITS: Balance = CHIS;
+	pub const CENTS: Balance = UNITS / 100;
 	pub const MILLICENTS: Balance = CENTS / 1_000;
 
 	pub const fn deposit(items: u32, bytes: u32) -> Balance {
-		items as Balance * 1 * DOLLARS + (bytes as Balance) * 5 * MILLICENTS
+		items as Balance * 1 * UNITS + (bytes as Balance) * 5 * MILLICENTS
 	}
 }
 

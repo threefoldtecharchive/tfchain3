@@ -22,11 +22,11 @@ use sp_runtime::{
 	curve::PiecewiseLinear,
 	generic, impl_opaque_keys,
 	traits::{
-		AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, IdentifyAccount, NumberFor,
-		OpaqueKeys, SaturatedConversion, Verify,
+		AccountIdLookup, BlakeTwo256, Block as BlockT, Bounded, ConvertInto, IdentifyAccount,
+		NumberFor, OpaqueKeys, SaturatedConversion, Verify,
 	},
-	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, MultiSignature, Percent,
+	transaction_validity::{TransactionPriority, TransactionSource, TransactionValidity},
+	ApplyExtrinsicResult, FixedPointNumber, Percent, Perquintill,
 };
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -38,13 +38,14 @@ pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
 		ConstU128, ConstU16, ConstU32, ConstU64, ConstU8, Currency, EitherOfDiverse, EnsureOneOf,
-		FindAuthor, KeyOwnerProofSystem, Randomness, StorageInfo, U128CurrencyToVote,
+		FindAuthor, Imbalance, KeyOwnerProofSystem, OnUnbalanced, Randomness, StorageInfo,
+		U128CurrencyToVote,
 	},
 	weights::{
 		constants::{
 			BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_REF_TIME_PER_SECOND,
 		},
-		IdentityFee, Weight,
+		ConstantMultiplier, DispatchClass, IdentityFee, Weight,
 	},
 	PalletId, StorageValue,
 };
@@ -61,9 +62,7 @@ use impls::{Author, CreditToBlockAuthor};
 
 pub mod constants;
 pub use constants::*;
-use constants::{currency::*, fee::*};
-
-pub use tfchain_support::constants::time::*;
+use constants::{currency::*, fee::*, time::*};
 
 pub use node_primitives::{AccountId, Signature};
 use node_primitives::{AccountIndex, Balance, BlockNumber, Hash, Index, Moment};
@@ -110,11 +109,6 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("node-template"),
 	impl_name: create_runtime_str!("node-template"),
 	authoring_version: 1,
-	// The version of the runtime specification. A full node will not attempt to use its native
-	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
-	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
-	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
-	//   the compatible custom types.
 	spec_version: 100,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
@@ -134,8 +128,6 @@ const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(10);
 /// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used
 /// by  Operational  extrinsics.
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
-/// We allow for 2 seconds of compute with a 6 second average block time.
-const MAXIMUM_BLOCK_WEIGHT: Weight = 2 * WEIGHT_PER_SECOND;
 
 pub type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
@@ -154,24 +146,38 @@ construct_runtime!(
 		System: frame_system = 0,
 		Utility: pallet_utility = 1,
 		Timestamp: pallet_timestamp = 2,
+		Sudo: pallet_sudo = 3,
 		// Authorship must be before session in order to note author in the correct session and era
 		// for im-online and staking.
 		Authorship: pallet_authorship = 5,
-		Session: pallet_session = 6,
-		Aura: pallet_aura = 7,
-		Grandpa: pallet_grandpa = 8,
-		AssetTxPayment: pallet_asset_tx_payment = 9,
-		Staking: pallet_staking = 10,
-		Balances: pallet_balances = 12,
-		TransactionPayment: pallet_transaction_payment = 13,
-		Council: pallet_collective::<Instance1> = 14,
-		CouncilMembership: pallet_membership::<Instance1> = 15,
-		Treasury: pallet_treasury = 16,
-		Sudo: pallet_sudo = 17,
-		Offences: pallet_offences = 18,
-		Historical: pallet_session::historical::{Pallet} = 19,
-		Multisig: pallet_multisig = 20,
-		Assets: pallet_assets = 21,
+
+		// Consensus stuff
+		Session: pallet_session = 10,
+		Aura: pallet_aura = 11,
+		Grandpa: pallet_grandpa = 12,
+		Historical: pallet_session::historical::{Pallet} = 13,
+
+		// Tx stuff
+		AssetTxPayment: pallet_asset_tx_payment = 15,
+		TransactionPayment: pallet_transaction_payment = 16,
+
+		// Staking stuff
+		ElectionProviderMultiPhase: pallet_election_provider_multi_phase = 20,
+		Staking: pallet_staking = 21,
+		Offences: pallet_offences = 22,
+		VoterList: pallet_bags_list::<Instance1> = 23,
+
+		// Money stuff
+		Balances: pallet_balances = 25,
+		Treasury: pallet_treasury = 26,
+		Assets: pallet_assets = 27,
+
+		// Dao stuff
+		Council: pallet_collective::<Instance1> = 30,
+		CouncilMembership: pallet_membership::<Instance1> = 31,
+
+
+		Multisig: pallet_multisig = 35,
 	}
 );
 
@@ -206,6 +212,14 @@ pub type Executive = frame_executive::Executive<
 	Runtime,
 	AllPalletsWithSystem,
 >;
+
+impl<C> frame_system::offchain::SendTransactionTypes<C> for Runtime
+where
+	RuntimeCall: From<C>,
+{
+	type Extrinsic = UncheckedExtrinsic;
+	type OverarchingCall = RuntimeCall;
+}
 
 #[cfg(feature = "runtime-benchmarks")]
 #[macro_use]

@@ -148,7 +148,7 @@ fn testnet_genesis(
 	council_members: Vec<AccountId>,
 ) -> GenesisConfig {
 	const ENDOWMENT: u128 = 1_000_000_000_000 * CHIS;
-	const STASH: u128 = 100_000_000_000_000 * CHIS;
+	const STASH: u128 = 1_000_000_000 * CHIS;
 
 	GenesisConfig {
 		system: SystemConfig {
@@ -157,11 +157,7 @@ fn testnet_genesis(
 		},
 		balances: BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 60.
-			balances: endowed_accounts
-				.iter()
-				.map(|k| (k.clone(), ENDOWMENT))
-				.chain(initial_authorities.iter().map(|x| (x.0.clone(), STASH)))
-				.collect(),
+			balances: endowed_accounts.iter().cloned().map(|k| (k, ENDOWMENT)).collect(),
 		},
 		grandpa: GrandpaConfig { authorities: Default::default() },
 		sudo: SudoConfig {

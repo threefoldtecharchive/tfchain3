@@ -16,6 +16,7 @@ frame-system = { git = "https://github.com/paritytech/substrate", branch = "polk
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36", default-features = false }
 valip = "0.4.0"
+sp-consensus-aura = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36", default-features = false }
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]

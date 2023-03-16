@@ -3869,6 +3869,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-aura"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.36#cb4f2491b00af7d7817f3a54209c26b20faa1f51"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-timestamp",
+ "parity-scale-codec 3.4.0",
+ "scale-info",
+ "sp-application-crypto",
+ "sp-consensus-aura",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-authorship"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.36#cb4f2491b00af7d7817f3a54209c26b20faa1f51"
@@ -3880,30 +3896,6 @@ dependencies = [
  "scale-info",
  "sp-authorship",
  "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-babe"
-version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.36#cb4f2491b00af7d7817f3a54209c26b20faa1f51"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "log",
- "pallet-authorship",
- "pallet-session",
- "pallet-timestamp",
- "parity-scale-codec 3.4.0",
- "scale-info",
- "sp-application-crypto",
- "sp-consensus-babe",
- "sp-consensus-vrf",
- "sp-io",
- "sp-runtime",
- "sp-session",
- "sp-staking",
  "sp-std",
 ]
 
@@ -4046,7 +4038,7 @@ dependencies = [
 name = "pallet-grid-contracts"
 version = "3.0.0"
 dependencies = [
- "env_logger 0.9.3",
+ "env_logger 0.10.0",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -5589,57 +5581,32 @@ dependencies = [
 ]
 
 [[package]]
-name = "sc-consensus-babe"
+name = "sc-consensus-aura"
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.36#cb4f2491b00af7d7817f3a54209c26b20faa1f51"
 dependencies = [
  "async-trait",
- "fork-tree",
  "futures",
  "log",
- "merlin",
- "num-bigint",
- "num-rational",
- "num-traits",
  "parity-scale-codec 3.4.0",
- "parking_lot 0.12.1",
+ "sc-block-builder",
  "sc-client-api",
  "sc-consensus",
- "sc-consensus-epochs",
  "sc-consensus-slots",
- "sc-keystore",
  "sc-telemetry",
- "schnorrkel",
- "serde",
  "sp-api",
  "sp-application-crypto",
  "sp-block-builder",
  "sp-blockchain",
  "sp-consensus",
- "sp-consensus-babe",
+ "sp-consensus-aura",
  "sp-consensus-slots",
- "sp-consensus-vrf",
  "sp-core",
  "sp-inherents",
- "sp-io",
  "sp-keystore",
  "sp-runtime",
- "sp-version",
  "substrate-prometheus-endpoint",
  "thiserror",
-]
-
-[[package]]
-name = "sc-consensus-epochs"
-version = "0.10.0-dev"
-source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.36#cb4f2491b00af7d7817f3a54209c26b20faa1f51"
-dependencies = [
- "fork-tree",
- "parity-scale-codec 3.4.0",
- "sc-client-api",
- "sc-consensus",
- "sp-blockchain",
- "sp-runtime",
 ]
 
 [[package]]
@@ -6847,23 +6814,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "sp-consensus-babe"
+name = "sp-consensus-aura"
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.36#cb4f2491b00af7d7817f3a54209c26b20faa1f51"
 dependencies = [
  "async-trait",
- "merlin",
  "parity-scale-codec 3.4.0",
  "scale-info",
- "serde",
  "sp-api",
  "sp-application-crypto",
  "sp-consensus",
  "sp-consensus-slots",
- "sp-consensus-vrf",
- "sp-core",
  "sp-inherents",
- "sp-keystore",
  "sp-runtime",
  "sp-std",
  "sp-timestamp",
@@ -6881,19 +6843,6 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "sp-timestamp",
-]
-
-[[package]]
-name = "sp-consensus-vrf"
-version = "0.10.0-dev"
-source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.36#cb4f2491b00af7d7817f3a54209c26b20faa1f51"
-dependencies = [
- "parity-scale-codec 3.4.0",
- "scale-info",
- "schnorrkel",
- "sp-core",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -7700,7 +7649,7 @@ dependencies = [
  "sc-cli",
  "sc-client-api",
  "sc-consensus",
- "sc-consensus-babe",
+ "sc-consensus-aura",
  "sc-executor",
  "sc-finality-grandpa",
  "sc-keystore",
@@ -7715,7 +7664,7 @@ dependencies = [
  "sp-block-builder",
  "sp-blockchain",
  "sp-consensus",
- "sp-consensus-babe",
+ "sp-consensus-aura",
  "sp-core",
  "sp-finality-grandpa",
  "sp-inherents",
@@ -7745,8 +7694,8 @@ dependencies = [
  "node-primitives",
  "pallet-asset-tx-payment",
  "pallet-assets",
+ "pallet-aura",
  "pallet-authorship",
- "pallet-babe",
  "pallet-bags-list",
  "pallet-balances",
  "pallet-collective",
@@ -7775,7 +7724,7 @@ dependencies = [
  "smallvec",
  "sp-api",
  "sp-block-builder",
- "sp-consensus-babe",
+ "sp-consensus-aura",
  "sp-core",
  "sp-inherents",
  "sp-npos-elections",
@@ -7798,6 +7747,7 @@ dependencies = [
  "frame-system",
  "parity-scale-codec 3.4.0",
  "scale-info",
+ "sp-consensus-aura",
  "sp-runtime",
  "sp-std",
  "valip",

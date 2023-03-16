@@ -15,8 +15,9 @@ use scale_info::prelude::format;
 use serde_json::Value;
 use sp_core::crypto::KeyTypeId;
 use substrate_fixed::types::U32F32;
+use tfchain_support::traits::FindNextAuthorTrait;
 
-pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"babe");
+pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"aura");
 
 const SRC_CODE: &str = "USDC";
 const SRC_ISSUER: &str = "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN";
@@ -90,6 +91,8 @@ pub mod pallet {
 		/// Origin for restricted extrinsics
 		/// Can be the root or another origin configured in the runtime
 		type RestrictedOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+
+		type FindNextAuthor: FindNextAuthorTrait<Self>;
 	}
 
 	#[pallet::event]
@@ -311,9 +314,9 @@ impl<T: Config> Pallet<T> {
 		match Self::is_next_block_author(&signer) {
 			Ok(_) => (),
 			Err(_) => {
-                log::info!("is not next block author")
-                return Ok(())
-            },
+				log::info!("is not next block author");
+				return Ok(());
+			},
 		}
 
 		let last_block_set: T::BlockNumber = LastBlockSet::<T>::get();
@@ -321,6 +324,7 @@ impl<T: Config> Pallet<T> {
 		if block_number.saturated_into::<u64>() - last_block_set.saturated_into::<u64>() < 10 {
 			return Ok(());
 		}
+
 		let price = match Self::fetch_price() {
 			Ok(v) => v,
 			Err(err) => {
@@ -383,42 +387,6 @@ impl<T: Config> Pallet<T> {
 		let items = queue.get_all_values();
 		let sum = items.iter().fold(0_u32, |a, b| a.saturating_add(*b));
 		(U32F32::from_num(sum) / U32F32::from_num(items.len())).round().to_num::<u32>()
-	}
-
-	// Validates if the given signer is the next block author based on the validators in session
-	// This can be used if an extrinsic should be refunded by the author in the same block
-	// It also requires that the keytype inserted for the offchain workers is the validator key
-	fn is_next_block_author(
-		signer: &Signer<T, <T as Config>::AuthorityId>,
-	) -> Result<(), Error<T>> {
-		let author = <pallet_authorship::Pallet<T>>::author();
-		let validators = <pallet_session::Pallet<T>>::validators();
-
-		// Sign some arbitrary data in order to get the AccountId, maybe there is another way to do this?
-		let signed_message = signer.sign_message(&[0]);
-		if let Some(signed_message_data) = signed_message {
-			if let Some(block_author) = author {
-				let validator =
-					<T as pallet_session::Config>::ValidatorIdOf::convert(block_author.clone())
-						.ok_or(Error::<T>::IsNotAnAuthority)?;
-
-				let validator_count = validators.len();
-				let author_index = (validators.iter().position(|a| a == &validator).unwrap_or(0)
-					+ 1) % validator_count;
-
-				let signer_validator_account =
-					<T as pallet_session::Config>::ValidatorIdOf::convert(
-						signed_message_data.0.id.clone(),
-					)
-					.ok_or(Error::<T>::IsNotAnAuthority)?;
-
-				if signer_validator_account != validators[author_index] {
-					return Err(Error::<T>::WrongAuthority);
-				}
-			}
-		}
-
-		Ok(().into())
 	}
 
 	fn is_validator(account: T::AccountId) -> bool {

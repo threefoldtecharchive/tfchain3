@@ -4,7 +4,7 @@ use sp_core::{sr25519, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use tfchain_runtime::{
-	currency::CHIS, AccountId, AssetsConfig, BabeConfig, BabeId, BalancesConfig, CouncilConfig,
+	currency::CHIS, AccountId, AssetsConfig, AuraConfig, AuraId, BalancesConfig, CouncilConfig,
 	CouncilMembershipConfig, GenesisConfig, GrandpaConfig, GridContractsConfig, GridStoreConfig,
 	Perbill, SessionConfig, SessionKeys, Signature, StakingConfig, SudoConfig, SystemConfig,
 	TftPriceConfig, TreasuryConfig, WASM_BINARY,
@@ -61,7 +61,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
 				vec![(
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
 					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-					get_from_seed::<BabeId>("Alice"),
+					get_from_seed::<AuraId>("Alice"),
 					get_from_seed::<GrandpaId>("Alice"),
 				)], // Sudo account
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -124,13 +124,13 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 					(
 						get_account_id_from_seed::<sr25519::Public>("Alice"),
 						get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-						get_from_seed::<BabeId>("Alice"),
+						get_from_seed::<AuraId>("Alice"),
 						get_from_seed::<GrandpaId>("Alice"),
 					),
 					(
 						get_account_id_from_seed::<sr25519::Public>("Bob"),
 						get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-						get_from_seed::<BabeId>("Bob"),
+						get_from_seed::<AuraId>("Bob"),
 						get_from_seed::<GrandpaId>("Bob"),
 					),
 				], // Sudo account
@@ -181,7 +181,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 /// Configure initial storage state for FRAME modules.
 fn testnet_genesis(
 	wasm_binary: &[u8],
-	initial_authorities: Vec<(AccountId, AccountId, BabeId, GrandpaId)>,
+	initial_authorities: Vec<(AccountId, AccountId, AuraId, GrandpaId)>,
 	root_key: AccountId,
 	endowed_accounts: Vec<AccountId>,
 	council_members: Vec<AccountId>,
@@ -215,16 +215,13 @@ fn testnet_genesis(
 					(
 						x.0.clone(),
 						x.0.clone(),
-						SessionKeys { babe: x.2.clone(), grandpa: x.3.clone() },
+						SessionKeys { aura: x.2.clone(), grandpa: x.3.clone() },
 					)
 				})
 				.collect::<Vec<_>>(),
 		},
 		transaction_payment: Default::default(),
-		babe: BabeConfig {
-			authorities: Default::default(),
-			epoch_config: Some(tfchain_runtime::BABE_GENESIS_EPOCH_CONFIG),
-		},
+		aura: AuraConfig { authorities: vec![] },
 		staking: StakingConfig {
 			minimum_validator_count: 1,
 			validator_count: initial_authorities.len() as u32,

@@ -15,7 +15,7 @@ use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
 use sp_api::impl_runtime_apis;
-pub use sp_consensus_babe::AuthorityId as BabeId;
+pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str,
@@ -90,7 +90,7 @@ pub mod opaque {
 
 	impl_opaque_keys! {
 		pub struct SessionKeys {
-			pub babe: Babe,
+			pub aura: Aura,
 			pub grandpa: Grandpa,
 		}
 	}
@@ -99,12 +99,12 @@ pub mod opaque {
 impl_opaque_keys! {
 	pub struct SessionKeys {
 		pub grandpa: Grandpa,
-		pub babe: Babe,
+		pub aura: Aura,
 	}
 }
 
-pub fn session_keys(babe: BabeId, grandpa: GrandpaId) -> SessionKeys {
-	SessionKeys { babe, grandpa }
+pub fn session_keys(aura: AuraId, grandpa: GrandpaId) -> SessionKeys {
+	SessionKeys { aura, grandpa }
 }
 
 // To learn more about runtime versioning, see:
@@ -120,13 +120,6 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	transaction_version: 1,
 	state_version: 1,
 };
-
-/// The BABE epoch configuration at genesis.
-pub const BABE_GENESIS_EPOCH_CONFIG: sp_consensus_babe::BabeEpochConfiguration =
-	sp_consensus_babe::BabeEpochConfiguration {
-		c: PRIMARY_PROBABILITY,
-		allowed_slots: sp_consensus_babe::AllowedSlots::PrimaryAndSecondaryVRFSlots,
-	};
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
@@ -169,7 +162,8 @@ construct_runtime!(
 
 		// Consensus stuff
 		Session: pallet_session = 15,
-		Babe: pallet_babe = 16,
+		// Babe: pallet_babe = 16,
+		Aura: pallet_aura = 16,
 		Grandpa: pallet_grandpa = 17,
 		Historical: pallet_session::historical::{Pallet} = 18,
 
@@ -273,6 +267,52 @@ where
 	}
 }
 
+pub struct FindNextAuthor;
+// Validates if the given signer is the next block author based on the validators in session
+// This can be used if an extrinsic should be refunded by the author in the same block
+// It also requires that the keytype inserted for the offchain workers is the validator key
+impl FindNextAuthorTrait for FindNextAuthor {
+	fn is_next_block_author(signer: &Signer<T, AuraId>) -> Result<(), Error<T>> {
+		let author = <pallet_authorship::Pallet<T>>::author();
+		log::info!("author: {:?}", author.clone());
+		let validators = <pallet_session::Pallet<T>>::validators();
+		log::info!("validators: {:?}", validators.clone());
+
+		// Sign some arbitrary data in order to get the AccountId, maybe there is another way to do this?
+		let signed_message = signer.sign_message(&[0]);
+		if let Some(signed_message_data) = signed_message {
+			if let Some(block_author) = author {
+				let validator_count = validators.len();
+				let author_index = (validators
+					.iter()
+					.position(|a| {
+						if let Ok(blabla) = &block_author.clone().try_into() {
+							log::info!("blabla: {:?}", blabla.clone());
+							a == blabla
+						} else {
+							false
+						}
+					})
+					.unwrap_or(0) + 1) % validator_count;
+
+				log::info!("author index: {}", author_index);
+
+				let signer_validator_account =
+					<T as pallet_session::Config>::ValidatorIdOf::convert(
+						signed_message_data.0.id.clone(),
+					)
+					.ok_or(Error::<T>::IsNotAnAuthority)?;
+
+				if signer_validator_account != validators[author_index] {
+					return Err(Error::<T>::WrongAuthority);
+				}
+			}
+		}
+
+		Ok(().into())
+	}
+}
+
 impl frame_system::offchain::SigningTypes for Runtime {
 	type Public = <Signature as sp_runtime::traits::Verify>::Signer;
 	type Signature = Signature;
@@ -359,54 +399,16 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl sp_consensus_babe::BabeApi<Block> for Runtime {
-		fn configuration() -> sp_consensus_babe::BabeConfiguration {
-			let epoch_config = Babe::epoch_config().unwrap_or(BABE_GENESIS_EPOCH_CONFIG);
-			sp_consensus_babe::BabeConfiguration {
-				slot_duration: Babe::slot_duration(),
-				epoch_length: EpochDuration::get(),
-				c: epoch_config.c,
-				authorities: Babe::authorities().to_vec(),
-				randomness: Babe::randomness(),
-				allowed_slots: epoch_config.allowed_slots,
-			}
+	impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {
+		fn slot_duration() -> sp_consensus_aura::SlotDuration {
+			sp_consensus_aura::SlotDuration::from_millis(Aura::slot_duration())
 		}
 
-		fn current_epoch_start() -> sp_consensus_babe::Slot {
-			Babe::current_epoch_start()
-		}
-
-		fn current_epoch() -> sp_consensus_babe::Epoch {
-			Babe::current_epoch()
-		}
-
-		fn next_epoch() -> sp_consensus_babe::Epoch {
-			Babe::next_epoch()
-		}
-
-		fn generate_key_ownership_proof(
-			_slot: sp_consensus_babe::Slot,
-			authority_id: sp_consensus_babe::AuthorityId,
-		) -> Option<sp_consensus_babe::OpaqueKeyOwnershipProof> {
-			use codec::Encode;
-
-			Historical::prove((sp_consensus_babe::KEY_TYPE, authority_id))
-				.map(|p| p.encode())
-				.map(sp_consensus_babe::OpaqueKeyOwnershipProof::new)
-		}
-
-		fn submit_report_equivocation_unsigned_extrinsic(
-			equivocation_proof: sp_consensus_babe::EquivocationProof<<Block as BlockT>::Header>,
-			key_owner_proof: sp_consensus_babe::OpaqueKeyOwnershipProof,
-		) -> Option<()> {
-			let key_owner_proof = key_owner_proof.decode()?;
-
-			Babe::submit_unsigned_equivocation_report(
-				equivocation_proof,
-				key_owner_proof,
-			)
+		fn authorities() -> Vec<AuraId> {
+			Aura::authorities().into_inner()
 		}
 	}
+
 	impl sp_session::SessionKeys<Block> for Runtime {
 		fn generate_session_keys(seed: Option<Vec<u8>>) -> Vec<u8> {
 			opaque::SessionKeys::generate(seed)

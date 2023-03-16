@@ -33,7 +33,7 @@ use tfchain_support::{
 	types::PublicIP,
 };
 
-pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"babe");
+pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"aura");
 
 #[cfg(test)]
 mod mock;

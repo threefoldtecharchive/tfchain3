@@ -113,15 +113,37 @@ the DAO (or any other entity with elevated priviledges) can decide to revert the
 slash, thus preventing the destruction of the funds and returning them to the original
 owners.
 
-### Farming
+## Farming
 
-Nodes connected to tfchain3 will receive rewards in CHI. Additional rewards for utilization will be handed out to Farmers when their nodes are being used.
+Nodes connected to tfchain3 will receive rewards in CHI. Additional rewards for
+utilization will be handed out to Farmers when their nodes are being used. For a
+node to receive tokens, it must reach a certain amount of uptime over a given period
+of time. This uptime is tracked and recorded on chain through the use of `uptime
+remports`. A special minting pallet is implemented which aggregates these reports,
+and using the node uptime reported in them, calculates when nodes have rebooted.
+After a given amount of time (roughly 1 month) has passed, a verdict is applied wether
+the node has reached it's uptime requirement, or not. If it has, tokens are minted
+for the node as reward for being online. This is the base farming payout.
 
-TODO: define additional rewards
+Additionally, to incentivize farmers to attract workloads on their farm (by having
+good hardware), a node is rewarded for being utilized. Utilization is tracked through
+node contracts, which have the resources used set on chain. Every time a node reports
+the NRU consumption of a contract, it includes a timing window over which the NRU
+was consumed. Using this window, the minting pallet can determine how many resources
+were used for how long, by checking the given window and the contract resources which
+were already set on chain.
 
-#### Dificulty level
+Resources are thus tracked as `Resource X time`, where resource is the base value,
+and time is the amount of seconds. Every time used resources are counted, every resource
+is multiplied by the amont of time passed, and this is added to a counter for every
+resource. This then allows calculation of the percentage a resource was used over
+time by dividing this counter by the total of a given resource in the node, and then
+multiplying this with the duration of a `period`. Note that this requires to keep
+track of the resources in the node by the minting code, to avoid getting a skewed
+result if the capacity is upgraded.
 
-TODO
+Given the complexity of tokenomics as a whole, those will be handled in a different
+standalone spec.
 
 #### Linked to USD price
 

@@ -72,7 +72,10 @@ std = [
 	'frame-benchmarking/std',
 	'sp-io/std',
 	'frame-try-runtime/std',
-	'sp-core/std'
+	'sp-core/std',
+	'pallet-authorship/std',
+	'pallet-session/std',
+	'substrate-fixed/std'
 ]
 runtime-benchmarks = [
 	"frame-benchmarking",

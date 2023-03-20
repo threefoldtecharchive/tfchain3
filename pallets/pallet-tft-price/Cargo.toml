@@ -53,7 +53,9 @@ std = [
 	'scale-info/std',
 	'pallet-authorship/std',
 	'pallet-session/std',
-	'tfchain-support/std'
+	'tfchain-support/std',
+	'serde_json/std',
+	'substrate-fixed/std'
 ]
 try-runtime = [
     "frame-support/try-runtime",

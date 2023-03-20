@@ -29,5 +29,6 @@ std = [
   "frame-system/std",
   "sp-runtime/std",
   "sp-std/std",
-  "scale-info/std"
+  "scale-info/std",
+  "sp-consensus-aura/std"
 ]

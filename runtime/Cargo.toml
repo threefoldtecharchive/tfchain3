@@ -149,7 +149,11 @@ std = [
 	"log/std",
 	"tfchain-support/std",
 	"pallet-election-provider-multi-phase/std",
-	"pallet-bags-list/std"
+	"pallet-bags-list/std",
+	"frame-election-provider-support/std",
+	"node-primitives/std",
+	"pallet-session-benchmarking/std",
+	"sp-npos-elections/std"
 ]
 runtime-benchmarks = [
 	"frame-benchmarking/runtime-benchmarks",

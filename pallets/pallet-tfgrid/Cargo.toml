@@ -64,7 +64,8 @@ std = [
 	'log/std',
 	'frame-try-runtime/std',
 	'pallet-membership/std',
-	'pallet-collective/std'
+	'pallet-collective/std',
+	'serde_json/std'
 ]
 runtime-benchmarks = [
 	"frame-benchmarking",

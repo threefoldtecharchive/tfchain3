@@ -5,5 +5,5 @@ impl pallet_tft_price::Config for Runtime {
 	type Call = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;
 	type RestrictedOrigin = EnsureRootOrCouncilApproval;
-	type FindNextAuthor = FindNextAuthor;
+	type FindNextAuthor = FindNextAuraAuthor;
 }

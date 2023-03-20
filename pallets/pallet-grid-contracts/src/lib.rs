@@ -22,14 +22,14 @@ use pallet_tfgrid::types as pallet_tfgrid_types;
 use pallet_timestamp as timestamp;
 use sp_core::crypto::KeyTypeId;
 use sp_runtime::{
-	traits::{CheckedSub, Convert, SaturatedConversion},
+	traits::{CheckedSub, SaturatedConversion},
 	Perbill,
 };
 use sp_std::prelude::*;
 use substrate_fixed::types::U64F64;
 use system::offchain::SignMessage;
 use tfchain_support::{
-	traits::{ChangeNode, PublicIpModifier},
+	traits::{ChangeNode, FindNextAuthor, PublicIpModifier},
 	types::PublicIP,
 };
 
@@ -100,7 +100,7 @@ pub mod pallet {
 		fmt::Debug,
 		vec::Vec,
 	};
-	use tfchain_support::traits::{ChangeNode, PublicIpModifier};
+	use tfchain_support::traits::{ChangeNode, FindNextAuthor, PublicIpModifier};
 
 	pub type BalanceOf<T> =
 		<<T as Config>::Currency as Currency<<T as system::Config>::AccountId>>::Balance;
@@ -253,6 +253,8 @@ pub mod pallet {
 			+ MaxEncodedLen;
 
 		type RestrictedOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+
+		type FindNextAuthor: FindNextAuthor<Self::AccountId>;
 	}
 
 	#[pallet::event]
@@ -387,8 +389,6 @@ pub mod pallet {
 		ServiceContractMetadataTooLong,
 		ServiceContractNotEnoughFundsToPayBill,
 		CanOnlyIncreaseFrequency,
-		IsNotAnAuthority,
-		WrongAuthority,
 	}
 
 	#[pallet::genesis_config]
@@ -1044,10 +1044,23 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn bill_contract_using_signed_transaction(contract_id: u64) -> Result<(), Error<T>> {
-		let signer = Signer::<T, <T as pallet::Config>::AuthorityId>::any_account();
-
 		// Only allow the author of the next block to trigger the billing
-		Self::is_next_block_author(&signer)?;
+		let signer = Signer::<T, <T as pallet::Config>::AuthorityId>::any_account();
+		let signed_message = signer.sign_message(&[0]);
+		if let Some(signed_message_data) = signed_message {
+			match <T as Config>::FindNextAuthor::is_next_block_author(signed_message_data.0.id) {
+				Ok(is_next_author) => {
+					if !is_next_author {
+						log::info!("is not next block author");
+						return Ok(());
+					}
+				},
+				Err(_) => {
+					log::info!("is not next block author");
+					return Ok(());
+				},
+			}
+		}
 
 		if !signer.can_sign() {
 			log::error!(
@@ -2209,43 +2222,5 @@ impl<T: Config> PublicIpModifier for Pallet<T> {
 				_ => {},
 			}
 		}
-	}
-}
-
-impl<T: Config> Pallet<T> {
-	// Validates if the given signer is the next block author based on the validators in session
-	// This can be used if an extrinsic should be refunded by the author in the same block
-	// It also requires that the keytype inserted for the offchain workers is the validator key
-	fn is_next_block_author(
-		signer: &Signer<T, <T as Config>::AuthorityId>,
-	) -> Result<(), Error<T>> {
-		let author = <pallet_authorship::Pallet<T>>::author();
-		let validators = <pallet_session::Pallet<T>>::validators();
-
-		// Sign some arbitrary data in order to get the AccountId, maybe there is another way to do this?
-		let signed_message = signer.sign_message(&[0]);
-		if let Some(signed_message_data) = signed_message {
-			if let Some(block_author) = author {
-				let validator =
-					<T as pallet_session::Config>::ValidatorIdOf::convert(block_author.clone())
-						.ok_or(Error::<T>::IsNotAnAuthority)?;
-
-				let validator_count = validators.len();
-				let author_index = (validators.iter().position(|a| a == &validator).unwrap_or(0)
-					+ 1) % validator_count;
-
-				let signer_validator_account =
-					<T as pallet_session::Config>::ValidatorIdOf::convert(
-						signed_message_data.0.id.clone(),
-					)
-					.ok_or(Error::<T>::IsNotAnAuthority)?;
-
-				if signer_validator_account != validators[author_index] {
-					return Err(Error::<T>::WrongAuthority);
-				}
-			}
-		}
-
-		Ok(().into())
 	}
 }

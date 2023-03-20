@@ -25,6 +25,7 @@ use sp_runtime::{
 use sp_std::marker::PhantomData;
 use std::cell::RefCell;
 use tfchain_support::constants::time::MINUTES;
+use tfchain_support::traits::FindNextAuthor;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<TestRuntime>;
 type Block = mocking::MockBlock<TestRuntime>;
@@ -117,11 +118,19 @@ parameter_types! {
 	pub const UnsignedPriority: u64 = 100;
 }
 
+pub struct FindNextAuraAuthor;
+impl FindNextAuthor<AccountId> for FindNextAuraAuthor {
+	fn is_next_block_author(_author: AccountId) -> Result<bool, ()> {
+		return Ok(true);
+	}
+}
+
 impl Config for TestRuntime {
 	type AuthorityId = pallet_tft_price::AuthId;
 	type Call = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;
 	type RestrictedOrigin = EnsureRoot<Self::AccountId>;
+	type FindNextAuthor = FindNextAuraAuthor;
 }
 
 parameter_types! {

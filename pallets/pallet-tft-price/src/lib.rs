@@ -15,7 +15,7 @@ use scale_info::prelude::format;
 use serde_json::Value;
 use sp_core::crypto::KeyTypeId;
 use substrate_fixed::types::U32F32;
-use tfchain_support::traits::FindNextAuthorTrait;
+use tfchain_support::traits::FindNextAuthor;
 
 pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"aura");
 
@@ -55,6 +55,7 @@ pub mod pallet {
 		MultiSignature, MultiSigner,
 	};
 	use sp_std::convert::TryFrom;
+	use tfchain_support::traits::FindNextAuthor;
 
 	app_crypto!(sr25519, KEY_TYPE);
 
@@ -92,7 +93,7 @@ pub mod pallet {
 		/// Can be the root or another origin configured in the runtime
 		type RestrictedOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
-		type FindNextAuthor: FindNextAuthorTrait<Self>;
+		type FindNextAuthor: FindNextAuthor<Self::AccountId>;
 	}
 
 	#[pallet::event]
@@ -113,8 +114,6 @@ pub mod pallet {
 		AccountUnauthorizedToSetPrice,
 		MaxPriceBelowMinPriceError,
 		MinPriceAboveMaxPriceError,
-		IsNotAnAuthority,
-		WrongAuthority,
 	}
 
 	#[pallet::pallet]
@@ -308,15 +307,22 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn offchain_signed_tx(block_number: T::BlockNumber) -> Result<(), Error<T>> {
-		let signer = Signer::<T, <T as pallet::Config>::AuthorityId>::any_account();
-
 		// Only allow the author of the next block to trigger the billing
-		match Self::is_next_block_author(&signer) {
-			Ok(_) => (),
-			Err(_) => {
-				log::info!("is not next block author");
-				return Ok(());
-			},
+		let signer = Signer::<T, <T as pallet::Config>::AuthorityId>::any_account();
+		let signed_message = signer.sign_message(&[0]);
+		if let Some(signed_message_data) = signed_message {
+			match T::FindNextAuthor::is_next_block_author(signed_message_data.0.id) {
+				Ok(is_next_author) => {
+					if !is_next_author {
+						log::info!("is not next block author");
+						return Ok(());
+					}
+				},
+				Err(_) => {
+					log::info!("is not next block author");
+					return Ok(());
+				},
+			}
 		}
 
 		let last_block_set: T::BlockNumber = LastBlockSet::<T>::get();

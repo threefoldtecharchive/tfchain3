@@ -60,7 +60,7 @@ pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
 pub mod impls;
-use impls::{Author, CreditToBlockAuthor};
+pub use impls::*;
 
 pub mod constants;
 pub use constants::*;
@@ -264,52 +264,6 @@ where
 		let address = account;
 		let (call, extra, _) = raw_payload.deconstruct();
 		Some((call, (sp_runtime::MultiAddress::Id(address), signature, extra)))
-	}
-}
-
-pub struct FindNextAuthor;
-// Validates if the given signer is the next block author based on the validators in session
-// This can be used if an extrinsic should be refunded by the author in the same block
-// It also requires that the keytype inserted for the offchain workers is the validator key
-impl FindNextAuthorTrait for FindNextAuthor {
-	fn is_next_block_author(signer: &Signer<T, AuraId>) -> Result<(), Error<T>> {
-		let author = <pallet_authorship::Pallet<T>>::author();
-		log::info!("author: {:?}", author.clone());
-		let validators = <pallet_session::Pallet<T>>::validators();
-		log::info!("validators: {:?}", validators.clone());
-
-		// Sign some arbitrary data in order to get the AccountId, maybe there is another way to do this?
-		let signed_message = signer.sign_message(&[0]);
-		if let Some(signed_message_data) = signed_message {
-			if let Some(block_author) = author {
-				let validator_count = validators.len();
-				let author_index = (validators
-					.iter()
-					.position(|a| {
-						if let Ok(blabla) = &block_author.clone().try_into() {
-							log::info!("blabla: {:?}", blabla.clone());
-							a == blabla
-						} else {
-							false
-						}
-					})
-					.unwrap_or(0) + 1) % validator_count;
-
-				log::info!("author index: {}", author_index);
-
-				let signer_validator_account =
-					<T as pallet_session::Config>::ValidatorIdOf::convert(
-						signed_message_data.0.id.clone(),
-					)
-					.ok_or(Error::<T>::IsNotAnAuthority)?;
-
-				if signer_validator_account != validators[author_index] {
-					return Err(Error::<T>::WrongAuthority);
-				}
-			}
-		}
-
-		Ok(().into())
 	}
 }
 

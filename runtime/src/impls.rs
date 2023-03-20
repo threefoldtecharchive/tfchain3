@@ -25,6 +25,7 @@ use frame_support::traits::{
 use pallet_asset_tx_payment::HandleCredit;
 use sp_staking::{EraIndex, OnStakerSlash};
 use sp_std::collections::btree_map::BTreeMap;
+use tfchain_support::traits::FindNextAuthor;
 
 pub struct Author;
 impl OnUnbalanced<NegativeImbalance> for Author {
@@ -55,5 +56,22 @@ impl OnStakerSlash<AccountId, Balance> for OnStakerSlashNoop {
 		_slashed_ongoing: &BTreeMap<EraIndex, Balance>,
 	) {
 		// do nothing
+	}
+}
+
+pub struct FindNextAuraAuthor;
+impl FindNextAuthor<AccountId> for FindNextAuraAuthor {
+	fn is_next_block_author(account: AccountId) -> Result<bool, ()> {
+		let author = match <pallet_authorship::Pallet<Runtime>>::author() {
+			Some(a) => a,
+			None => return Ok(false),
+		};
+		let validators = <pallet_session::Pallet<Runtime>>::validators();
+
+		let validator_count = validators.len();
+		let author_index =
+			(validators.iter().position(|a| a == &author).unwrap_or(0) + 1) % validator_count;
+
+		return Ok(account == validators[author_index]);
 	}
 }

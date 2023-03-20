@@ -45,7 +45,7 @@ use sp_std::marker::PhantomData;
 use std::{cell::RefCell, panic, thread};
 use tfchain_support::{
 	constants::time::{MINUTES, SECS_PER_HOUR},
-	traits::ChangeNode,
+	traits::{ChangeNode, FindNextAuthor},
 };
 
 impl_opaque_keys! {
@@ -187,6 +187,13 @@ impl PublicIpModifier for PublicIpModifierType {
 	}
 }
 
+pub struct FindNextAuraAuthor;
+impl FindNextAuthor<AccountId> for FindNextAuraAuthor {
+	fn is_next_block_author(_author: AccountId) -> Result<bool, ()> {
+		return Ok(true);
+	}
+}
+
 parameter_types! {
 	pub const MaxFarmNameLength: u32 = 40;
 	pub const MaxInterfaceIpsLength: u32 = 5;
@@ -233,6 +240,7 @@ impl pallet_tft_price::Config for TestRuntime {
 	type AuthorityId = pallet_tft_price::AuthId;
 	type Call = RuntimeCall;
 	type RestrictedOrigin = EnsureRoot<Self::AccountId>;
+	type FindNextAuthor = FindNextAuraAuthor;
 }
 
 impl pallet_timestamp::Config for TestRuntime {
@@ -275,6 +283,7 @@ impl pallet_smart_contract::Config for TestRuntime {
 	type AuthorityId = pallet_smart_contract::crypto::AuthId;
 	type Call = RuntimeCall;
 	type PublicIpModifier = PublicIpModifierType;
+	type FindNextAuthor = FindNextAuraAuthor;
 }
 
 parameter_types! {

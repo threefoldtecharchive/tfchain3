@@ -38,4 +38,5 @@ impl pallet_grid_contracts::Config for Runtime {
 	type MaxDeploymentDataLength = MaxDeploymentDataLength;
 	type MaxNodeContractPublicIps = MaxFarmPublicIps;
 	type Burn = ();
+	type FindNextAuthor = FindNextAuraAuthor;
 }

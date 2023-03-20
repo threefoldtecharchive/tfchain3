@@ -1,7 +1,5 @@
 use crate::types::PublicIP;
-use frame_system::offchain::Signer;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_std::fmt::Error;
 
 pub trait Tfgrid<AccountId, Name> {
 	fn get_farm(farm_id: u32) -> Option<super::types::Farm<Name>>;
@@ -21,6 +19,6 @@ pub trait PublicIpModifier {
 	fn ip_removed(ip: &PublicIP);
 }
 
-pub trait FindNextAuthorTrait<T> {
-	fn is_next_block_author(signer: &Signer<T, AuraId>) -> Result<(), Error> {}
+pub trait FindNextAuthor<AccountId> {
+	fn is_next_block_author(author: AccountId) -> Result<bool, ()>;
 }

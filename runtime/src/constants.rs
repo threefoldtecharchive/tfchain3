@@ -95,9 +95,9 @@ pub mod fee {
 	impl WeightToFeePolynomial for WeightToFeeStruct {
 		type Balance = Balance;
 		fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-			// in Westend, extrinsic base weight (smallest non-zero weight) is mapped to 1/10 CENT:
+			// in Tfchain, extrinsic base weight (smallest non-zero weight) is mapped to 1 CENT:
 			let p = super::currency::CENTS;
-			let q = 10 * Balance::from(ExtrinsicBaseWeight::get().ref_time());
+			let q = 1 * Balance::from(ExtrinsicBaseWeight::get().ref_time());
 			smallvec![WeightToFeeCoefficient {
 				degree: 1,
 				negative: false,
@@ -118,10 +118,10 @@ mod tests {
 	#[test]
 	// This function tests that the fee for `ExtrinsicBaseWeight` of weight is correct
 	fn extrinsic_base_fee_is_correct() {
-		// `ExtrinsicBaseWeight` should cost 1/10 of a CENT
+		// `ExtrinsicBaseWeight` should cost one CENT
 		log::info!("Base: {}", ExtrinsicBaseWeight::get());
 		let x = WeightToFeeStruct::weight_to_fee(&ExtrinsicBaseWeight::get());
-		let y = CENTS / 10;
+		let y = CENTS / 1;
 		assert!(x.max(y) - x.min(y) < MILLICENTS);
 	}
 }

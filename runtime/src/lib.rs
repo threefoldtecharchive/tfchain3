@@ -185,11 +185,11 @@ construct_runtime!(
 		Multisig: pallet_multisig = 35,
 
 		// Custom pallets
-		GridContracts: pallet_grid_contracts = 40,
-		GridStore: pallet_tfgrid = 41,
-		Kvstore: pallet_kvstore = 42,
-		TftPrice: pallet_tft_price = 43,
-		Dao: pallet_dao = 44,
+		// GridContracts: pallet_grid_contracts = 40,
+		// GridStore: pallet_tfgrid = 41,
+		// Kvstore: pallet_kvstore = 42,
+		// TftPrice: pallet_tft_price = 43,
+		// Dao: pallet_dao = 44,
 	}
 );
 

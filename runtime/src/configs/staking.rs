@@ -1,29 +1,30 @@
 use crate::*;
 
+// / - `min_inflation`: the minimal amount to be rewarded between validators, expressed as a fraction
+// /   of total issuance. Known as `I_0` in the literature. Expressed in millionth, must be between 0
+// /   and 1_000_000.
+// / - `max_inflation`: the maximum amount to be rewarded between validators, expressed as a fraction
+// /   of total issuance. This is attained only when `ideal_stake` is achieved. Expressed in
+// /   millionth, must be between min_inflation and 1_000_000.
+// / - `ideal_stake`: the fraction of total issued tokens that should be actively staked behind
+// /   validators. Known as `x_ideal` in the literature. Expressed in millionth, must be between
+// /   0_100_000 and 0_900_000.
+// / - `falloff`: Known as `decay_rate` in the literature. A co-efficient dictating the strength of
+// /   the global incentivization to get the `ideal_stake`. A higher number results in less typical
+// /   inflation at the cost of greater volatility for validators. Expressed in millionth, must be
+// /   between 0 and 1_000_000.
+// / - `max_piece_count`: The maximum number of pieces in the curve. A greater number uses more
+// /   resources but results in higher accuracy. Must be between 2 and 1_000.
+// / - `test_precision`: The maximum error allowed in the generated test. Expressed in millionth,
+// /   must be between 0 and 1_000_000.
+
 pallet_staking_reward_curve::build! {
 	const REWARD_CURVE: PiecewiseLinear<'static> = curve!(
-		/// - `min_inflation`: the minimal amount to be rewarded between validators, expressed as a fraction
-		///   of total issuance. Known as `I_0` in the literature. Expressed in millionth, must be between 0
-		///   and 1_000_000.
 		min_inflation: 0_025_000,
-		/// - `max_inflation`: the maximum amount to be rewarded between validators, expressed as a fraction
-		///   of total issuance. This is attained only when `ideal_stake` is achieved. Expressed in
-		///   millionth, must be between min_inflation and 1_000_000.
 		max_inflation: 0_100_000,
-		/// - `ideal_stake`: the fraction of total issued tokens that should be actively staked behind
-		///   validators. Known as `x_ideal` in the literature. Expressed in millionth, must be between
-		///   0_100_000 and 0_900_000.
 		ideal_stake: 0_500_000,
-		/// - `falloff`: Known as `decay_rate` in the literature. A co-efficient dictating the strength of
-		///   the global incentivization to get the `ideal_stake`. A higher number results in less typical
-		///   inflation at the cost of greater volatility for validators. Expressed in millionth, must be
-		///   between 0 and 1_000_000.
 		falloff: 0_050_000,
-		/// - `max_piece_count`: The maximum number of pieces in the curve. A greater number uses more
-		///   resources but results in higher accuracy. Must be between 2 and 1_000.
 		max_piece_count: 40,
-		/// - `test_precision`: The maximum error allowed in the generated test. Expressed in millionth,
-		///   must be between 0 and 1_000_000.
 		test_precision: 0_005_000,
 	);
 }
@@ -85,7 +86,7 @@ impl pallet_staking::Config for Runtime {
 	/// should be applied immediately, without opportunity for intervention.
 	type SlashDeferDuration = SlashDeferDuration;
 	/// A super-majority of the council can cancel the slash.
-	type SlashCancelOrigin = EnsureRootOrCouncilApproval;
+	type AdminOrigin = EnsureRootOrCouncilApproval;
 	/// Interface for interacting with a session pallet.
 	type SessionInterface = Self;
 	/// The payout for validators and the system for the current era.

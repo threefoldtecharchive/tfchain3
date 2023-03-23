@@ -23,7 +23,7 @@ impl FindAuthor<AccountId> for AuraAccountAdapter {
 
 impl pallet_authorship::Config for Runtime {
 	type FindAuthor = AuraAccountAdapter;
-	type UncleGenerations = UncleGenerations;
-	type FilterUncle = ();
+	// type UncleGenerations = UncleGenerations;
+	// type FilterUncle = ();
 	type EventHandler = (Staking, ());
 }

@@ -7,7 +7,7 @@ use frame_support::dispatch::{DispatchResultWithPostInfo, Pays};
 use frame_system::offchain::{SendSignedTransaction, SignMessage, Signer};
 use log;
 use sp_runtime::offchain::{http, Duration};
-use sp_runtime::traits::{Convert, SaturatedConversion};
+use sp_runtime::traits::SaturatedConversion;
 use sp_std::{boxed::Box, vec::Vec};
 mod ringbuffer;
 use ringbuffer::{RingBufferTrait, RingBufferTransient};
@@ -160,7 +160,10 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let address = ensure_signed(origin)?;
 
-			ensure!(Self::is_validator(address), Error::<T>::AccountUnauthorizedToSetPrice);
+			ensure!(
+				T::FindNextAuthor::is_validator(address),
+				Error::<T>::AccountUnauthorizedToSetPrice
+			);
 
 			Self::calculate_and_set_price(price, block_number)
 		}
@@ -393,16 +396,5 @@ impl<T: Config> Pallet<T> {
 		let items = queue.get_all_values();
 		let sum = items.iter().fold(0_u32, |a, b| a.saturating_add(*b));
 		(U32F32::from_num(sum) / U32F32::from_num(items.len())).round().to_num::<u32>()
-	}
-
-	fn is_validator(account: T::AccountId) -> bool {
-		let validators = <pallet_session::Pallet<T>>::validators();
-
-		validators.iter().any(|validator| {
-			match <T as pallet_session::Config>::ValidatorIdOf::convert(account.clone()) {
-				Some(signer) => &signer == validator,
-				None => false,
-			}
-		})
 	}
 }

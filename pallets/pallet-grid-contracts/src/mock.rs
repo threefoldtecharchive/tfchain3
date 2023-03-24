@@ -109,7 +109,7 @@ construct_runtime!(
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		SmartContractModule: pallet_smart_contract::{Pallet, Call, Storage, Event<T>},
 		TFTPriceModule: pallet_tft_price::{Pallet, Call, Storage, Event<T>},
-		Authorship: pallet_authorship::{Pallet, Call, Storage, Inherent},
+		Authorship: pallet_authorship::{Pallet, Storage},
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
 	}
 );
@@ -191,6 +191,9 @@ pub struct FindNextAuraAuthor;
 impl FindNextAuthor<AccountId> for FindNextAuraAuthor {
 	fn is_next_block_author(_author: AccountId) -> Result<bool, ()> {
 		return Ok(true);
+	}
+	fn is_validator(_account: AccountId) -> bool {
+		return true;
 	}
 }
 
@@ -292,8 +295,6 @@ parameter_types! {
 
 impl pallet_authorship::Config for TestRuntime {
 	type FindAuthor = ();
-	type UncleGenerations = UncleGenerations;
-	type FilterUncle = ();
 	type EventHandler = ();
 }
 

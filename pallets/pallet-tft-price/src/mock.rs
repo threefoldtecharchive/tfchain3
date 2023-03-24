@@ -78,7 +78,7 @@ construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		TFTPriceModule: pallet_tft_price::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Authorship: pallet_authorship::{Pallet, Call, Storage, Inherent},
+		Authorship: pallet_authorship::{Pallet, Storage},
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
 	}
 );
@@ -123,6 +123,9 @@ impl FindNextAuthor<AccountId> for FindNextAuraAuthor {
 	fn is_next_block_author(_author: AccountId) -> Result<bool, ()> {
 		return Ok(true);
 	}
+	fn is_validator(_account: AccountId) -> bool {
+		return true;
+	}
 }
 
 impl Config for TestRuntime {
@@ -139,8 +142,6 @@ parameter_types! {
 
 impl pallet_authorship::Config for TestRuntime {
 	type FindAuthor = ();
-	type UncleGenerations = UncleGenerations;
-	type FilterUncle = ();
 	type EventHandler = ();
 }
 

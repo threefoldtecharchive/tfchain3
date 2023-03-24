@@ -74,4 +74,8 @@ impl FindNextAuthor<AccountId> for FindNextAuraAuthor {
 
 		return Ok(account == validators[author_index]);
 	}
+
+	fn is_validator(account: AccountId) -> bool {
+		<pallet_session::Pallet<Runtime>>::validators().contains(&account)
+	}
 }

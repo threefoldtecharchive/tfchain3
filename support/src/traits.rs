@@ -21,4 +21,5 @@ pub trait PublicIpModifier {
 
 pub trait FindNextAuthor<AccountId> {
 	fn is_next_block_author(author: AccountId) -> Result<bool, ()>;
+	fn is_validator(account: AccountId) -> bool;
 }

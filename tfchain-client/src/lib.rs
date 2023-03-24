@@ -4,6 +4,10 @@ use crate::runtimes::types::*;
 use serde::{Deserialize, Serialize};
 use sp_core::{crypto::SecretStringError, ed25519, sr25519, Pair};
 use std::str::FromStr;
+use subxt::config::extrinsic_params::BaseExtrinsicParams;
+use subxt::config::polkadot::PlainTip;
+use subxt::config::WithExtrinsicParams;
+use subxt::SubstrateConfig;
 use subxt::{
 	tx::{PairSigner, Signer},
 	Error, OnlineClient, PolkadotConfig,
@@ -77,11 +81,31 @@ impl KeyPair {
 		Ok(pair)
 	}
 
-	pub fn signer(&self) -> Box<dyn Signer<PolkadotConfig> + Send + Sync> {
+	pub fn signer(&self) -> KeypairSigner {
 		match self {
-			Self::Ed25519(pair) => Box::new(PairSigner::new(pair.clone())),
-			Self::Sr25519(pair) => Box::new(PairSigner::new(pair.clone())),
+			Self::Ed25519(pair) => KeypairSigner(Box::new(PairSigner::new(pair.clone()))),
+			Self::Sr25519(pair) => KeypairSigner(Box::new(PairSigner::new(pair.clone()))),
 		}
+	}
+}
+
+pub struct KeypairSigner(Box<dyn Signer<PolkadotConfig> + Send + Sync>);
+
+impl
+	subxt::tx::Signer<
+		WithExtrinsicParams<SubstrateConfig, BaseExtrinsicParams<SubstrateConfig, PlainTip>>,
+	> for KeypairSigner
+{
+	fn account_id(&self) -> &<WithExtrinsicParams<SubstrateConfig, BaseExtrinsicParams<SubstrateConfig, PlainTip>> as subxt::Config>::AccountId{
+		self.0.account_id()
+	}
+
+	fn address(&self) -> <WithExtrinsicParams<SubstrateConfig, BaseExtrinsicParams<SubstrateConfig, PlainTip>> as subxt::Config>::Address{
+		self.0.address()
+	}
+
+	fn sign(&self, signer_payload: &[u8]) -> <WithExtrinsicParams<SubstrateConfig, BaseExtrinsicParams<SubstrateConfig, PlainTip>> as subxt::Config>::Signature{
+		self.0.sign(signer_payload)
 	}
 }
 

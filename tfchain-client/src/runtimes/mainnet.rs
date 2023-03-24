@@ -1,5 +1,5 @@
 use super::types::*;
-use crate::Client;
+use crate::{Client, KeyPair};
 use subxt::{subxt, Error};
 
 #[subxt(runtime_metadata_path = "artifacts/mainnet.scale")]
@@ -31,4 +31,31 @@ pub async fn get_balance(
 		.fetch(&mainnet::storage().system().account(account))
 		.await?
 		.map(|t| GenericAccountInfo::from(t)))
+}
+
+pub async fn transfer_native(
+	cl: &Client,
+	kp: &KeyPair,
+	dest: AccountId32,
+	value: u128,
+) -> Result<Hash, Error> {
+	let transfer_tx = mainnet::tx().balances().transfer(dest.into(), value);
+
+	let s = &kp.signer();
+
+	let transfer = cl
+		.api
+		.tx()
+		.sign_and_submit_then_watch_default(&transfer_tx, s)
+		.await?
+		.wait_for_finalized_success()
+		.await?;
+
+	let balances_transfer = transfer.find_first::<mainnet::balances::events::Transfer>()?;
+
+	if let Some(_) = balances_transfer {
+		Ok(transfer.block_hash())
+	} else {
+		Err(Error::Other(String::from("failed to transfer")))
+	}
 }

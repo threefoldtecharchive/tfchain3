@@ -14,7 +14,8 @@ members = [
     'runtime',
 	'pallets/*',
     'support',
-    'primitives'
+    'primitives',
+    'tfchain-client'
 ]
 
 [profile.release]

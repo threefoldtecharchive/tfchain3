@@ -159,4 +159,13 @@ impl Client {
 	) -> Result<Option<Hash>, Error> {
 		call!(self, get_block_hash, block_number)
 	}
+
+	pub async fn transfer_native(
+		&self,
+		keypair: &KeyPair,
+		to: AccountId32,
+		amount: u128,
+	) -> Result<Hash, Error> {
+		call!(self, transfer_native, keypair, to, amount)
+	}
 }

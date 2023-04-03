@@ -10,11 +10,12 @@ version = "0.1.0"
 
 [workspace]
 members = [
-    'node',
-    'runtime',
-	'pallets/*',
-    'support',
-    'primitives'
+    'tfchain/node',
+    'tfchain/runtime',
+    'tfchain/support',
+    'tfchain/primitives',
+    'tfchain/pallets/*',
+    'bridge/pallet-tft-bridge'
 ]
 
 [profile.release]
@@ -46,20 +47,20 @@ lite-json = { version = "0.1", default-features = false }
 parking_lot = '0.11'
 
 # Internal pallets
-pallet-dao = { path = "pallets/pallet-dao", default-features = false }
-pallet-grid-contracts = { path = "pallets/pallet-grid-contracts", default-features = false }
-pallet-kvstore = { path = "pallets/pallet-kvstore", default-features = false }
-pallet-tfgrid = { path = "pallets/pallet-tfgrid", default-features = false }
-pallet-tft-price = { path = "pallets/pallet-tft-price", default-features = false }
+pallet-dao = { path = "tfchain/pallets/pallet-dao", default-features = false }
+pallet-grid-contracts = { path = "tfchain/pallets/pallet-grid-contracts", default-features = false }
+pallet-kvstore = { path = "tfchain/pallets/pallet-kvstore", default-features = false }
+pallet-tfgrid = { path = "tfchain/pallets/pallet-tfgrid", default-features = false }
+pallet-tft-price = { path = "tfchain/pallets/pallet-tft-price", default-features = false }
 
 # primitives
-node-primitives = { path = "primitives", default-features = false }
+node-primitives = { path = "tfchain/primitives", default-features = false }
 
 # Internal support
-tfchain-support = { path = "support", default-features = false }
+tfchain-support = { path = "tfchain/support", default-features = false }
 
 # Runtimes
-tfchain-runtime = { path = "runtime", default-features = false }
+tfchain-runtime = { path = "tfchain/runtime", default-features = false }
 
 # Benchmarking (with default disabled)
 frame-system-benchmarking = {git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.38"}
